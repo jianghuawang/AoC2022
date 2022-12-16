@@ -1,52 +1,48 @@
 use anyhow::Result;
 use std::fs::read_to_string;
 
-fn part1() -> Result<i32> {
-    let content = read_to_string("data/day2.txt")?;
-    let mut res = 0;
-    for line in content.lines() {
-        let mut arr = line.split_whitespace();
-        let (oppo, sf) = (arr.next().unwrap(), arr.next().unwrap());
-
-        match (oppo, sf) {
-            ("A", "X") => res += 4,
-            ("A", "Y") => res += 8,
-            ("A", "Z") => res += 3,
-            ("B", "X") => res += 1,
-            ("B", "Y") => res += 5,
-            ("B", "Z") => res += 9,
-            ("C", "X") => res += 7,
-            ("C", "Y") => res += 2,
-            _ => res += 6,
-        }
+fn to_score(s: u8) -> i32 {
+    match s {
+        b'A' => 0,
+        b'B' => 1,
+        b'C' => 2,
+        b'X' => 0,
+        b'Y' => 1,
+        _ => 2,
     }
-    Ok(res)
 }
 
-fn part2() -> Result<i32> {
-    let content = read_to_string("data/day2.txt")?;
-    let mut res = 0;
-    for line in content.lines() {
-        let mut arr = line.split_whitespace();
-        let (oppo, sf) = (arr.next().unwrap(), arr.next().unwrap());
+fn part1_res(oppo: i32, sf: i32) -> i32 {
+    sf + 1 + (sf - oppo + 4) % 3 * 3
+}
 
-        match (oppo, sf) {
-            ("A", "X") => res += 3,
-            ("A", "Y") => res += 4,
-            ("A", "Z") => res += 8,
-            ("B", "X") => res += 1,
-            ("B", "Y") => res += 5,
-            ("B", "Z") => res += 9,
-            ("C", "X") => res += 2,
-            ("C", "Y") => res += 6,
-            _ => res += 7,
+fn part1(input: &str) -> i32 {
+    input
+        .lines()
+        .map(|line| part1_res(to_score(line.as_bytes()[0]), to_score(line.as_bytes()[2])))
+        .sum::<i32>()
+}
+
+fn part2_res(oppo: i32, res: i32) -> i32 {
+    res * 3
+        + 1
+        + match res {
+            0 => (oppo + 2) % 3,
+            1 => oppo,
+            _ => (oppo + 4) % 3,
         }
-    }
-    Ok(res)
+}
+
+fn part2(input: &str) -> i32 {
+    input
+        .lines()
+        .map(|line| part2_res(to_score(line.as_bytes()[0]), to_score(line.as_bytes()[2])))
+        .sum::<i32>()
 }
 
 fn main() -> Result<()> {
-    println!("part1:{}", part1()?);
-    println!("part2:{}", part2()?);
+    let content = read_to_string("data/day2.txt")?;
+    println!("part1:{}", part1(&content));
+    println!("part2:{}", part2(&content));
     Ok(())
 }
