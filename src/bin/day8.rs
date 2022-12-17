@@ -1,91 +1,54 @@
 use std::fs::read_to_string;
-
 use anyhow::Result;
+use itertools::Itertools;
 
-fn part1(input: &str) -> usize {
-    let mut marked = vec![vec![false; 99]; 99];
-    let mut cols = vec![b'0' - 1; 99];
-    let lines = input.lines().collect::<Vec<_>>();
-    for (i, &line) in lines.iter().enumerate() {
-        let mut max = b'0' - 1;
-        for (j, b) in line.bytes().enumerate() {
-            if b > max || b > cols[j] {
-                marked[i][j] = true;
-            }
-            max = max.max(b);
-            cols[j] = cols[j].max(b);
+const DIR: [(i32, i32); 4] = [(-1, 0), (0, -1), (1, 0), (0, 1)];
+
+// solution inspired by @ageron
+fn dis_to_tree_or_boarder(grid: &[Vec<u8>], mut x: i32, mut y: i32, dx: i32, dy: i32) -> i32 {
+    let height = grid[x as usize][y as usize];
+    let m = grid.len() as i32;
+    let n = grid[0].len() as i32;
+    for step in 1.. {
+        x += dx;
+        y += dy;
+
+        if x < 0 || y < 0 || x >= m || y >= n {
+            return 1 - step;
+        } else if grid[x as usize][y as usize] >= height {
+            return step;
         }
     }
-
-    let mut cols = vec![b'0' - 1; 99];
-    for (i, &line) in lines.iter().enumerate().rev() {
-        let mut max = b'0' - 1;
-        for (j, b) in line.bytes().enumerate().rev() {
-            if b > max || b > cols[j] {
-                marked[i][j] = true;
-            }
-            max = max.max(b);
-            cols[j] = cols[j].max(b);
-        }
-    }
-    marked.into_iter().flatten().filter(|&b| b).count()
+    unreachable!()
 }
 
-fn part2(input: &str) -> i32 {
-    let mut scores = vec![vec![1; 99]; 99];
-    let mut cols: Vec<Vec<(u8, i32)>> = vec![vec![]; 99];
-    let lines = input.lines().collect::<Vec<_>>();
-    for (i, &line) in lines.iter().enumerate() {
-        let mut row: Vec<(u8, i32)> = vec![];
-        for (j, b) in line.bytes().enumerate() {
-            let mut left_score = 0;
-            while !row.is_empty() && row.last().unwrap().0 < b {
-                let last = row.pop().unwrap().1;
-                left_score += last;
-            }
-            row.push((b, left_score + 1));
-            left_score += if row.len() == 1 { 0 } else { 1 };
+fn part1(grid: &[Vec<u8>]) -> usize {
+    (0..grid.len())
+        .cartesian_product(0..grid[0].len())
+        .filter(|&(x, y)| {
+            DIR.into_iter()
+                .any(|(dx, dy)| dis_to_tree_or_boarder(grid, x as i32, y as i32, dx, dy) <= 0)
+        })
+        .count()
+}
 
-            let mut top_score = 0;
-            while !cols[j].is_empty() && cols[j].last().unwrap().0 < b {
-                let last = cols[j].pop().unwrap().1;
-                top_score += last;
-            }
-            cols[j].push((b, top_score + 1));
-            top_score += if cols[j].len() == 1 { 0 } else { 1 };
-
-            scores[i][j] = left_score * top_score;
-        }
-    }
-
-    let mut cols: Vec<Vec<(u8, i32)>> = vec![vec![]; 99];
-    for (i, &line) in lines.iter().enumerate().rev() {
-        let mut row: Vec<(u8, i32)> = vec![];
-        for (j, b) in line.bytes().enumerate().rev() {
-            let mut right_score = 0;
-            while !row.is_empty() && row.last().unwrap().0 < b {
-                let last = row.pop().unwrap().1;
-                right_score += last;
-            }
-            row.push((b, right_score + 1));
-            right_score += if row.len() == 1 { 0 } else { 1 };
-
-            let mut bottom_score = 0;
-            while !cols[j].is_empty() && cols[j].last().unwrap().0 < b {
-                let last = cols[j].pop().unwrap().1;
-                bottom_score += last;
-            }
-            cols[j].push((b, bottom_score + 1));
-
-            bottom_score += if cols[j].len() == 1 { 0 } else { 1 };
-            scores[i][j] *= right_score * bottom_score;
-        }
-    }
-    scores.into_iter().flatten().max().unwrap()
+fn part2(grid: &[Vec<u8>]) -> i32 {
+    (0..grid.len())
+        .cartesian_product(0..grid[0].len())
+        .map(|(x, y)| {
+            DIR.into_iter().fold(1, |prod, (dx, dy)| {
+                prod * dis_to_tree_or_boarder(grid, x as i32, y as i32, dx, dy).abs()
+            })
+        })
+        .max()
+        .unwrap()
 }
 
 fn main() -> Result<()> {
-    let content = read_to_string("data/day8.txt")?;
+    let content: Vec<_> = read_to_string("data/day8.txt")?
+        .lines()
+        .map(|l| l.as_bytes().to_vec())
+        .collect();
 
     println!("part1: {}", part1(&content));
     println!("part2: {}", part2(&content));
