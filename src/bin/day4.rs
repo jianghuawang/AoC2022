@@ -1,5 +1,4 @@
 use anyhow::Result;
-use itertools::Itertools;
 use std::{fs::read_to_string, str::FromStr};
 
 #[derive(Debug, Clone, Copy)]

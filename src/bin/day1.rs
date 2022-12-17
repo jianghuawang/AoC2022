@@ -1,7 +1,5 @@
 use anyhow::Result;
 use itertools::Itertools;
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
 use std::fs::read_to_string;
 
 fn part1(input: &str) -> i32 {
